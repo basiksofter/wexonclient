@@ -532,170 +532,84 @@
         </div>
     </div>
     <script>
-        const translations = {
-            en: {
-                loading: "Loading...",
-                register: "Register",
-                username: "Username",
-                username_error: "Username is required",
-                password: "Password",
-                password_error: "Password is required",
-                license_key: "License Key",
-                key_error: "Valid license key is required",
-                back_to_login: "Back to Login",
-                success: "Registration successful! Redirecting to login...",
-                error: "Registration failed. Please check your inputs."
-            },
-            ru: {
-                loading: "Загрузка...",
-                register: "Регистрация",
-                username: "Имя пользователя",
-                username_error: "Имя пользователя обязательно",
-                password: "Пароль",
-                password_error: "Пароль обязателен",
-                license_key: "Лицензионный ключ",
-                key_error: "Требуется действительный лицензионный ключ",
-                back_to_login: "Вернуться к входу",
-                success: "Регистрация успешна! Перенаправление на страницу входа...",
-                error: "Ошибка регистрации. Пожалуйста, проверьте введенные данные."
-            }
-        };
-
-        // Initialize state
-        let currentLanguage = localStorage.getItem('language') || 'en';
-        let currentTheme = localStorage.getItem('theme') || 'dark';
-
-        // DOM elements
-        const registerBox = document.getElementById('registerBox');
-        const loadingOverlay = document.getElementById('loadingOverlay');
-        const languageToggle = document.getElementById('languageToggle');
-        const languageDropdown = document.getElementById('languageDropdown');
-        const currentLanguageIcon = document.getElementById('currentLanguageIcon');
-        const themeToggle = document.getElementById('themeToggle');
-        const closeBtn = document.getElementById('closeBtn');
-        const usernameInput = document.getElementById('usernameInput');
-        const passwordInput = document.getElementById('passwordInput');
-        const keyInput = document.getElementById('keyInput');
-        const usernameError = document.getElementById('usernameError');
-        const passwordError = document.getElementById('passwordError');
-        const keyError = document.getElementById('keyError');
-        const registerBtn = document.getElementById('registerBtn');
-        const discordBtn = document.getElementById('discordBtn');
-        const telegramBtn = document.getElementById('telegramBtn');
-        const loginLink = document.getElementById('loginLink');
-
-        // Language management
-        function updateLanguage(lang) {
-            if (lang === currentLanguage) return;
-            currentLanguage = lang;
-            localStorage.setItem('language', lang);
-            currentLanguageIcon.src = `${lang}.svg`;
-            document.querySelectorAll('[data-text]').forEach(element => {
-                const key = element.getAttribute('data-text');
-                element.textContent = translations[lang][key] || element.textContent;
-            });
-            window.chrome.webview.postMessage(`language_changed:${lang}`);
-        }
-
-        // Theme management
-        function updateTheme(theme) {
-            currentTheme = theme;
-            document.body.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-        }
-
-        // Notification
-        function showNotification(message, type) {
-            const notification = document.createElement('div');
-            notification.className = `notification ${type}`;
-            notification.textContent = message;
-            registerBox.insertBefore(notification, registerBox.firstChild);
-            setTimeout(() => {
-                notification.classList.add('show');
-                setTimeout(() => {
-                    notification.classList.remove('show');
-                    setTimeout(() => notification.remove(), 300);
-                }, 3000);
-            }, 10);
-        }
-
-        // Validation
-        function validateInputs() {
-            let isValid = true;
-            usernameError.style.display = 'none';
-            passwordError.style.display = 'none';
-            keyError.style.display = 'none';
-
-            if (!usernameInput.value.trim()) {
-                usernameError.style.display = 'block';
-                isValid = false;
-            }
-            if (!passwordInput.value.trim()) {
-                passwordError.style.display = 'block';
-                isValid = false;
-            }
-            if (!keyInput.value.trim()) {
-                keyError.style.display = 'block';
-                isValid = false;
-            }
-
-            return isValid;
-        }
-
-        // Registration
-        async function registerUser() {
-            if (!validateInputs()) return;
-
-            registerBtn.disabled = true;
-            loadingOverlay.classList.remove('hidden');
-
-            try {
-                const userData = {
-                    username: usernameInput.value.trim(),
-                    password: passwordInput.value.trim(),
-                    nickname: usernameInput.value.trim(),
-                    licenseKey: keyInput.value.trim()
-                };
-
-                const response = await fetch('/api/register', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(userData)
-                });
-
-                if (!response.ok) {
-                    throw new Error(`Registration failed: ${response.statusText}`);
-                }
-
-                const result = await response.json();
-                if (result.success) {
-                    showNotification(translations[currentLanguage].success, 'success');
-                    setTimeout(() => {
-                        window.chrome.webview.postMessage('navigate:login.html');
-                    }, 2000);
-                } else {
-                    showNotification(result.message || translations[currentLanguage].error, 'error');
-                }
-            } catch (error) {
-                console.error('Error during registration:', error);
-                showNotification(translations[currentLanguage].error, 'error');
-            } finally {
-                loadingOverlay.classList.add('hidden');
-                registerBtn.disabled = false;
-            }
-        }
-
-        // Event listeners
         document.addEventListener('DOMContentLoaded', () => {
-            updateTheme(currentTheme);
-            updateLanguage(currentLanguage);
-            setTimeout(() => loadingOverlay.classList.add('hidden'), 500);
+            // --- Basic UI Setup ---
+            const loadingOverlay = document.querySelector('.loading-overlay');
+            const themeToggle = document.querySelector('.theme-toggle');
+            const languageToggle = document.querySelector('.language-toggle');
+            const languageDropdown = document.querySelector('.language-dropdown');
+            const currentLangIcon = document.getElementById('current-lang-icon');
+            const closeBtn = document.querySelector('.close-btn');
+            const passwordInput = document.getElementById('password');
+            const togglePassword = document.querySelector('.toggle-password');
+            const socials = document.querySelector('.socials');
 
+            // --- Translations ---
+            const translations = {
+                en: {
+                    loading: "Loading...",
+                    register: "Register",
+                    username: "Username",
+                    username_error: "Username is required",
+                    password: "Password",
+                    password_error: "Password is required",
+                    license_key: "License Key",
+                    key_error: "Valid license key is required",
+                    back_to_login: "Back to Login",
+                    success: "Registration successful! Redirecting to login...",
+                    error: "Registration failed. Please check your inputs."
+                },
+                ru: {
+                    loading: "Загрузка...",
+                    register: "Регистрация",
+                    username: "Имя пользователя",
+                    username_error: "Имя пользователя обязательно",
+                    password: "Пароль",
+                    password_error: "Пароль обязателен",
+                    license_key: "Лицензионный ключ",
+                    key_error: "Требуется действительный лицензионный ключ",
+                    back_to_login: "Вернуться к входу",
+                    success: "Регистрация успешна! Перенаправление на страницу входа...",
+                    error: "Ошибка регистрации. Пожалуйста, проверьте введенные данные."
+                }
+            };
+            
+            // --- State ---
+            let currentTheme = localStorage.getItem('theme') || 'dark';
+            let currentLanguage = localStorage.getItem('language') || 'en';
+
+            // --- Functions ---
+            const updateTheme = (theme) => {
+                document.documentElement.setAttribute('data-theme', theme);
+                localStorage.setItem('theme', theme);
+            };
+
+            const updateLanguage = (lang) => {
+                currentLanguage = lang;
+                localStorage.setItem('language', lang);
+                currentLangIcon.src = `./${lang}.svg`;
+                document.querySelectorAll('[data-translate]').forEach(el => {
+                    const key = el.getAttribute('data-translate');
+                    if (translations[lang] && translations[lang][key]) {
+                        el.textContent = translations[lang][key];
+                    }
+                });
+                if (window.chrome && window.chrome.webview) {
+                    window.chrome.webview.postMessage(`language_changed:${lang}`);
+                }
+            };
+            
+            const showMessage = (text, type) => {
+                const messageDiv = document.getElementById('message');
+                if (messageDiv) {
+                    messageDiv.textContent = text;
+                    messageDiv.className = `message ${type}`;
+                    messageDiv.style.display = text ? 'block' : 'none';
+                }
+            };
+
+            // --- Registration Form Logic ---
             const registerForm = document.getElementById('register-form');
-            const messageDiv = document.getElementById('message');
-
             if (registerForm) {
                 registerForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
@@ -709,23 +623,15 @@
                     try {
                         const response = await fetch('/api/auth/register', {
                             method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                username: username,
-                                password: password,
-                                client_key: clientKey
-                            })
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username, password, client_key: clientKey })
                         });
 
                         const data = await response.json();
 
                         if (response.ok) {
-                            showMessage(data.message || 'Registration successful!', 'success');
-                            setTimeout(() => {
-                                window.location.href = './index.html';
-                            }, 2000);
+                            showMessage('Registration successful! Redirecting...', 'success');
+                            setTimeout(() => { window.location.href = './index.html'; }, 2000);
                         } else {
                             showMessage(data.message || 'An error occurred.', 'error');
                         }
@@ -734,16 +640,21 @@
                     }
                 });
             }
-            
-            function showMessage(text, type) {
-                if (messageDiv) {
-                    messageDiv.textContent = text;
-                    messageDiv.className = `message ${type}`;
-                    messageDiv.style.display = text ? 'block' : 'none';
-                }
-            }
 
-            // ... other event listeners like close button, etc.
+            // --- Initial Page Load ---
+            updateTheme(currentTheme);
+            updateLanguage(currentLanguage);
+            setTimeout(() => {
+                if(loadingOverlay) loadingOverlay.classList.add('hidden');
+            }, 500);
+
+            // --- Event Listeners ---
+            if(themeToggle) themeToggle.addEventListener('click', () => {
+                currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+                updateTheme(currentTheme);
+            });
+            
+            // ... add other listeners for language, close, etc.
         });
     </script>
 </body>
