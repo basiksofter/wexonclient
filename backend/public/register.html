@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        
+        :root {
+            --bg-primary: #0d0d1a;
+            --bg-secondary: rgba(255, 255, 255, 0.05);
+            --bg-secondary-hover: rgba(255, 255, 255, 0.08);
+            --border-primary: rgba(255, 255, 255, 0.1);
+            --border-focus: rgba(255, 255, 255, 0.3);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --text-placeholder: rgba(255, 255, 255, 0.4);
+            --button-bg: #ffffff;
+            --button-text: #0d0d1a;
+            --button-hover: #e0e0e0;
+            --button-disabled: rgba(255, 255, 255, 0.3);
+            --success-bg: rgba(34, 197, 94, 0.1);
+            --success-border: rgba(34, 197, 94, 0.3);
+            --success-text: #22c55e;
+            --error-bg: rgba(239, 68, 68, 0.1);
+            --error-border: rgba(239, 68, 68, 0.3);
+            --error-text: #ef4444;
+            --hover-overlay: rgba(255, 255, 255, 0.1);
+            --social-bg: rgba(255, 255, 255, 0.05);
+            --social-hover: rgba(255, 255, 255, 0.15);
+        }
+        
+        [data-theme="light"] {
+            --bg-primary: #ffffff;
+            --bg-secondary: rgba(0, 0, 0, 0.05);
+            --bg-secondary-hover: rgba(0, 0, 0, 0.08);
+            --border-primary: rgba(0, 0, 0, 0.1);
+            --border-focus: rgba(0, 0, 0, 0.3);
+            --text-primary: #1a1a1a;
+            --text-secondary: rgba(0, 0, 0, 0.6);
+            --text-placeholder: rgba(0, 0, 0, 0.4);
+            --button-bg: #1a1a1a;
+            --button-text: #ffffff;
+            --button-hover: #333333;
+            --button-disabled: rgba(0, 0, 0, 0.3);
+            --success-bg: rgba(34, 197, 94, 0.1);
+            --success-border: rgba(34, 197, 94, 0.3);
+            --success-text: #16a34a;
+            --error-bg: rgba(239, 68, 68, 0.1);
+            --error-border: rgba(239, 68, 68, 0.3);
+            --error-text: #dc2626;
+            --hover-overlay: rgba(0, 0, 0, 0.1);
+            --social-bg: rgba(0, 0, 0, 0.05);
+            --social-hover: rgba(0, 0, 0, 0.15);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            transition: all 0.3s ease;
+        }
+
+        .register-box {
+            background: var(--bg-primary);
+            width: 480px;
+            height: 620px;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg-primary);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            z-index: 10;
+            opacity: 1;
+            transition: all 0.5s ease;
+        }
+
+        .loading-overlay.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            margin-bottom: 20px;
+        }
+
+        .spinner img {
+            width: 100%;
+            height: 100%;
+            animation: spin 1s linear infinite;
+            filter: brightness(0) invert(1);
+        }
+
+        [data-theme="light"] .spinner img {
+            filter: brightness(0) invert(0);
+        }
+
+        .loading-text {
+            color: var(--text-primary);
+            font-size: 16px;
+            font-weight: 500;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .header-controls {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .language-selector {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .language-toggle {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .language-toggle:hover {
+            background: var(--hover-overlay);
+        }
+
+        .language-toggle img {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+        }
+
+        .language-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: var(--bg-primary);
+            border: 1px solid var(--border-primary);
+            border-radius: 6px;
+            padding: 4px;
+            margin-top: 4px;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(-10px);
+            transition: all 0.2s ease;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .language-dropdown.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .language-option {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            transition: background-color 0.2s ease;
+        }
+
+        .language-option:hover {
+            background: var(--hover-overlay);
+        }
+
+        .language-option img {
+            width: 16px;
+            height: 16px;
+            border-radius: 2px;
+        }
+
+        .theme-toggle, .close-btn {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: background-color 0.2s ease;
+        }
+
+        .theme-toggle:hover, .close-btn:hover {
+            background: var(--hover-overlay);
+        }
+
+        .theme-icon {
+            width: 16px;
+            height: 16px;
+            position: relative;
+        }
+
+        .theme-icon img {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 16px;
+            height: 16px;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: brightness(0) invert(1);
+        }
+
+        [data-theme="light"] .theme-icon img {
+            filter: brightness(0) invert(0);
+        }
+
+        .moon-icon {
+            opacity: 1;
+            transform: rotate(0deg) scale(1);
+        }
+
+        .sun-icon {
+            opacity: 0;
+            transform: rotate(180deg) scale(0.5);
+        }
+
+        [data-theme="light"] .moon-icon {
+            opacity: 0;
+            transform: rotate(-180deg) scale(0.5);
+        }
+
+        [data-theme="light"] .sun-icon {
+            opacity: 1;
+            transform: rotate(0deg) scale(1);
+        }
+
+        .close-btn::before,
+        .close-btn::after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 2px;
+            background: var(--text-primary);
+            border-radius: 1px;
+        }
+
+        .close-btn::before {
+            transform: rotate(45deg);
+        }
+
+        .close-btn::after {
+            transform: rotate(-45deg);
+        }
+
+        .register-title {
+            color: var(--text-primary);
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            text-align: center;
+            transition: color 0.3s ease;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        .input-label {
+            color: var(--text-primary);
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 8px;
+            display: block;
+            transition: color 0.3s ease;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 16px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.2s ease;
+            -webkit-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
+        }
+
+        .input-field::placeholder {
+            color: var(--text-placeholder);
+        }
+
+        .input-field:focus {
+            border-color: var(--border-focus);
+            background: var(--bg-secondary-hover);
+        }
+
+        .error-message {
+            color: var(--error-text);
+            font-size: 12px;
+            margin-top: 4px;
+            display: none;
+            transition: color 0.3s ease;
+        }
+
+        .register-btn {
+            width: 100%;
+            padding: 14px 20px;
+            background: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-top: 24px;
+        }
+
+        .register-btn:hover {
+            background: var(--button-hover);
+        }
+
+        .register-btn:disabled {
+            background: var(--button-disabled);
+            cursor: not-allowed;
+        }
+
+        .social-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+
+        .social-btn {
+            width: 48px;
+            height: 48px;
+            background: var(--social-bg);
+            border: 1px solid var(--border-primary);
+            border-radius: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .social-btn:hover {
+            background: var(--social-hover);
+        }
+
+        .social-btn img {
+            width: 24px;
+            height: 24px;
+            filter: brightness(0) invert(1);
+        }
+
+        [data-theme="light"] .social-btn img {
+            filter: brightness(0) invert(0);
+        }
+
+        .login-link {
+            color: var(--text-secondary);
+            font-size: 14px;
+            text-align: center;
+            cursor: pointer;
+            transition: color 0.2s ease;
+        }
+
+        .login-link:hover {
+            color: var(--text-primary);
+        }
+
+        .notification {
+            padding: 12px 16px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            text-align: center;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transform: translateY(-10px);
+            transition: all 0.3s ease;
+            pointer-events: none;
+        }
+
+        .notification.show {
+            opacity: 1;
+            max-height: 50px;
+            margin-bottom: 20px;
+            transform: translateY(0);
+            pointer-events: auto;
+        }
+
+        .notification.success {
+            background: var(--success-bg);
+            border: 1px solid var(--success-border);
+            color: var(--success-text);
+        }
+
+        .notification.error {
+            background: var(--error-bg);
+            border: 1px solid var(--error-border);
+            color: var(--error-text);
+        }
+    </style>
+</head>
+<body>
+    <div class="register-box" id="registerBox">
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner">
+                <img src="loading.svg" alt="Loading">
+            </div>
+            <div class="loading-text" data-text="loading">Loading...</div>
+        </div>
+
+        <div class="header-controls">
+            <div class="language-selector">
+                <div class="language-toggle" id="languageToggle">
+                    <img src="en.svg" alt="English" id="currentLanguageIcon">
+                </div>
+                <div class="language-dropdown" id="languageDropdown">
+                    <div class="language-option" data-lang="en">
+                        <img src="en.svg" alt="English">
+                    </div>
+                    <div class="language-option" data-lang="ru">
+                        <img src="ru.svg" alt="Русский">
+                    </div>
+                </div>
+            </div>
+            <div class="theme-toggle" id="themeToggle">
+                <div class="theme-icon">
+                    <img class="moon-icon" src="moon.svg" alt="moon">
+                    <img class="sun-icon" src="sun.svg" alt="sun">
+                </div>
+            </div>
+            <div class="close-btn" id="closeBtn"></div>
+        </div>
+
+        <h1 class="register-title" data-text="register">Register</h1>
+
+        <div class="input-group">
+            <label class="input-label" data-text="username">Username</label>
+            <input type="text" id="usernameInput" class="input-field" placeholder="Enter username">
+            <div class="error-message" id="usernameError" data-text="username_error">Username is required</div>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label" data-text="password">Password</label>
+            <input type="password" id="passwordInput" class="input-field" placeholder="Enter password">
+            <div class="error-message" id="passwordError" data-text="password_error">Password is required</div>
+        </div>
+
+        <div class="input-group">
+            <label class="input-label" data-text="license_key">License Key</label>
+            <input type="text" id="keyInput" class="input-field" placeholder="Enter license key">
+            <div class="error-message" id="keyError" data-text="key_error">Valid license key is required</div>
+        </div>
+
+        <button class="register-btn" id="registerBtn" data-text="register">Register</button>
+
+        <div class="social-buttons">
+            <button class="social-btn" id="discordBtn">
+                <img src="discord.svg" alt="Discord">
+            </button>
+            <button class="social-btn" id="telegramBtn">
+                <img src="telegram.svg" alt="Telegram">
+            </button>
+        </div>
+
+        <div class="login-link" id="loginLink" data-text="back_to_login">Back to Login</div>
+    </div>
+
+    <script>
+        const translations = {
+            en: {
+                loading: "Loading...",
+                register: "Register",
+                username: "Username",
+                username_error: "Username is required",
+                password: "Password",
+                password_error: "Password is required",
+                license_key: "License Key",
+                key_error: "Valid license key is required",
+                back_to_login: "Back to Login",
+                success: "Registration successful! Redirecting to login...",
+                error: "Registration failed. Please check your inputs."
+            },
+            ru: {
+                loading: "Загрузка...",
+                register: "Регистрация",
+                username: "Имя пользователя",
+                username_error: "Имя пользователя обязательно",
+                password: "Пароль",
+                password_error: "Пароль обязателен",
+                license_key: "Лицензионный ключ",
+                key_error: "Требуется действительный лицензионный ключ",
+                back_to_login: "Вернуться к входу",
+                success: "Регистрация успешна! Перенаправление на страницу входа...",
+                error: "Ошибка регистрации. Пожалуйста, проверьте введенные данные."
+            }
+        };
+
+        // Initialize state
+        let currentLanguage = localStorage.getItem('language') || 'en';
+        let currentTheme = localStorage.getItem('theme') || 'dark';
+
+        // DOM elements
+        const registerBox = document.getElementById('registerBox');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const languageToggle = document.getElementById('languageToggle');
+        const languageDropdown = document.getElementById('languageDropdown');
+        const currentLanguageIcon = document.getElementById('currentLanguageIcon');
+        const themeToggle = document.getElementById('themeToggle');
+        const closeBtn = document.getElementById('closeBtn');
+        const usernameInput = document.getElementById('usernameInput');
+        const passwordInput = document.getElementById('passwordInput');
+        const keyInput = document.getElementById('keyInput');
+        const usernameError = document.getElementById('usernameError');
+        const passwordError = document.getElementById('passwordError');
+        const keyError = document.getElementById('keyError');
+        const registerBtn = document.getElementById('registerBtn');
+        const discordBtn = document.getElementById('discordBtn');
+        const telegramBtn = document.getElementById('telegramBtn');
+        const loginLink = document.getElementById('loginLink');
+
+        // Language management
+        function updateLanguage(lang) {
+            if (lang === currentLanguage) return;
+            currentLanguage = lang;
+            localStorage.setItem('language', lang);
+            currentLanguageIcon.src = `${lang}.svg`;
+            document.querySelectorAll('[data-text]').forEach(element => {
+                const key = element.getAttribute('data-text');
+                element.textContent = translations[lang][key] || element.textContent;
+            });
+            window.chrome.webview.postMessage(`language_changed:${lang}`);
+        }
+
+        // Theme management
+        function updateTheme(theme) {
+            currentTheme = theme;
+            document.body.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+        }
+
+        // Notification
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            registerBox.insertBefore(notification, registerBox.firstChild);
+            setTimeout(() => {
+                notification.classList.add('show');
+                setTimeout(() => {
+                    notification.classList.remove('show');
+                    setTimeout(() => notification.remove(), 300);
+                }, 3000);
+            }, 10);
+        }
+
+        // Validation
+        function validateInputs() {
+            let isValid = true;
+            usernameError.style.display = 'none';
+            passwordError.style.display = 'none';
+            keyError.style.display = 'none';
+
+            if (!usernameInput.value.trim()) {
+                usernameError.style.display = 'block';
+                isValid = false;
+            }
+            if (!passwordInput.value.trim()) {
+                passwordError.style.display = 'block';
+                isValid = false;
+            }
+            if (!keyInput.value.trim()) {
+                keyError.style.display = 'block';
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // Registration
+        async function registerUser() {
+            if (!validateInputs()) return;
+
+            registerBtn.disabled = true;
+            loadingOverlay.classList.remove('hidden');
+
+            try {
+                const userData = {
+                    username: usernameInput.value.trim(),
+                    password: passwordInput.value.trim(),
+                    nickname: usernameInput.value.trim(),
+                    licenseKey: keyInput.value.trim()
+                };
+
+                const response = await fetch('/api/register', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Registration failed: ${response.statusText}`);
+                }
+
+                const result = await response.json();
+                if (result.success) {
+                    showNotification(translations[currentLanguage].success, 'success');
+                    setTimeout(() => {
+                        window.chrome.webview.postMessage('navigate:login.html');
+                    }, 2000);
+                } else {
+                    showNotification(result.message || translations[currentLanguage].error, 'error');
+                }
+            } catch (error) {
+                console.error('Error during registration:', error);
+                showNotification(translations[currentLanguage].error, 'error');
+            } finally {
+                loadingOverlay.classList.add('hidden');
+                registerBtn.disabled = false;
+            }
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            updateTheme(currentTheme);
+            updateLanguage(currentLanguage);
+            setTimeout(() => loadingOverlay.classList.add('hidden'), 500);
+        });
+
+        languageToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            languageDropdown.classList.toggle('show');
+        });
+
+        document.querySelectorAll('.language-option').forEach(option => {
+            option.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const lang = option.getAttribute('data-lang');
+                updateLanguage(lang);
+                languageDropdown.classList.remove('show');
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!languageToggle.contains(e.target) && !languageDropdown.contains(e.target)) {
+                languageDropdown.classList.remove('show');
+            }
+        });
+
+        themeToggle.addEventListener('click', () => {
+            updateTheme(currentTheme === 'light' ? 'dark' : 'light');
+        });
+
+        closeBtn.addEventListener('click', () => {
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.postMessage('close_window');
+            } else {
+                console.error('WebView2 not available');
+                showNotification('Unable to close window', 'error');
+            }
+        });
+
+        registerBtn.addEventListener('click', registerUser);
+
+        discordBtn.addEventListener('click', () => {
+            window.chrome.webview.postMessage('open_url:https://discord.com/invite/your-discord-invite');
+        });
+
+        telegramBtn.addEventListener('click', () => {
+            window.chrome.webview.postMessage('open_url:https://t.me/your-telegram-channel');
+        });
+
+        loginLink.addEventListener('click', () => {
+            window.chrome.webview.postMessage('navigate:login.html');
+        });
+
+        [usernameInput, passwordInput, keyInput].forEach(input => {
+            input.addEventListener('focus', () => {
+                input.style.userSelect = 'text';
+            });
+            input.addEventListener('blur', () => {
+                input.style.userSelect = 'none';
+            });
+        });
+    </script>
+</body>
+</html>
