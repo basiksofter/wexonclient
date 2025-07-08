@@ -67,7 +67,7 @@
         
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Inter', system-ui, sans-serif;
-            height: 100vh;
+            /* height: 100vh; */ /* Удалено для корректной работы с WebView2 AutoResize */
             display: flex;
             align-items: center;
             justify-content: center;
@@ -78,7 +78,7 @@
         .register-box {
             background: var(--bg-primary);
             width: 480px;
-            height: 620px;
+            /* height: 620px; */ /* Удалено для корректной работы с WebView2 AutoResize */
             padding: 40px;
             border-radius: 12px;
             box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
