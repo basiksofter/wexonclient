@@ -1007,6 +1007,91 @@
                 }
             }, delay);
         });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const loginForm = document.getElementById('login-form');
+            const messageDiv = document.getElementById('message');
+
+            if (loginForm) {
+                loginForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+
+                    const username = document.getElementById('username').value;
+                    const password = document.getElementById('password').value;
+                    
+                    showMessage('', 'none');
+
+                    try {
+                        const response = await fetch('/api/auth/login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ username, password })
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            localStorage.setItem('token', data.token);
+                            
+                            const rememberMe = document.getElementById('remember-me').checked;
+                            if (rememberMe) {
+                                // This message can be caught by your C++ app to save credentials
+                                if (window.chrome && window.chrome.webview) {
+                                    window.chrome.webview.postMessage(`save_remember_data:${JSON.stringify({username, password})}`);
+                                }
+                            } else {
+                                if (window.chrome && window.chrome.webview) {
+                                    window.chrome.webview.postMessage('clear_remember_data');
+                                }
+                            }
+
+                            showMessage('Login successful!', 'success');
+                            setTimeout(() => {
+                                window.location.href = './profile.html';
+                            }, 1000);
+                        } else {
+                            showMessage(data.message || 'Login failed', 'error');
+                        }
+                    } catch (error) {
+                        showMessage('Could not connect to the server.', 'error');
+                    }
+                });
+            }
+
+            // Listen for messages from the C++ host
+            if (window.chrome && window.chrome.webview) {
+                window.chrome.webview.addEventListener('message', event => {
+                    const msg = event.data;
+
+                    if (typeof msg === 'string' && msg.startsWith('remembered_data:')) {
+                        try {
+                            const data = JSON.parse(msg.substring(16));
+                            document.getElementById('username').value = data.username || '';
+                            document.getElementById('password').value = data.password || '';
+                            if (data.username && data.password) {
+                                document.getElementById('remember-me').checked = true;
+                            }
+                        } catch (e) { console.error('Error parsing remembered_data', e); }
+                    } else if (msg === 'auto_login') {
+                        // Automatically submit the form if there's data
+                        if (document.getElementById('username').value && document.getElementById('password').value) {
+                            loginForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+                        }
+                    }
+                });
+                
+                // Ask the host for remembered data on page load
+                window.chrome.webview.postMessage('check_remember_data');
+            }
+
+            function showMessage(text, type) {
+                if (messageDiv) {
+                    messageDiv.textContent = text;
+                    messageDiv.className = `message ${type}`;
+                    messageDiv.style.display = text ? 'block' : 'none';
+                }
+            }
+        });
     </script>
 </body>
 </html>

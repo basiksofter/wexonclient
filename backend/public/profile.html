@@ -1781,6 +1781,140 @@
                 window.chrome.webview.postMessage('load_config');
             }, delay);
         });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = './index.html';
+                return;
+            }
+
+            // Elements
+            const usernameDisplay = document.getElementById('username-display');
+            const userRoleDisplay = document.getElementById('user-role-display').querySelector('.role');
+            const versionSelector = document.querySelector('.version-selector');
+            const launchButton = document.getElementById('launchBtn');
+            const logoutButton = document.getElementById('logoutBtn'); // Assuming you have a logout button
+            const adminPanelLink = document.getElementById('admin-panel-link');
+
+            try {
+                const response = await fetch('/api/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    localStorage.removeItem('token');
+                    window.location.href = './index.html';
+                    return;
+                }
+
+                const user = await response.json();
+                
+                // Display user info
+                usernameDisplay.textContent = user.username;
+                userRoleDisplay.textContent = user.role;
+                userRoleDisplay.className = `role ${user.role}`; // for styling
+
+                // --- Render version buttons based on role ---
+                versionSelector.innerHTML = ''; // Clear any existing buttons
+                let availableVersions = [];
+                if (user.role === 'alpha') availableVersions.push('alpha', 'beta', 'release');
+                else if (user.role === 'beta') availableVersions.push('beta', 'release');
+                else availableVersions.push('release');
+                
+                availableVersions.forEach(version => {
+                    const button = document.createElement('button');
+                    button.className = 'version-btn';
+                    button.dataset.version = version;
+                    button.textContent = version.charAt(0).toUpperCase() + version.slice(1);
+                    versionSelector.appendChild(button);
+                });
+
+                // --- Admin Panel Link ---
+                if (user.role === 'alpha') {
+                    adminPanelLink.style.display = 'block';
+                }
+
+                // --- Launch Logic ---
+                let selectedVersion = 'release'; // default
+                const versionButtons = versionSelector.querySelectorAll('.version-btn');
+                
+                if (versionButtons.length > 0) {
+                    versionButtons[0].classList.add('selected');
+                    selectedVersion = versionButtons[0].dataset.version;
+                }
+
+                versionButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        versionButtons.forEach(btn => btn.classList.remove('selected'));
+                        button.classList.add('selected');
+                        selectedVersion = button.dataset.version;
+                    });
+                });
+
+                launchButton.addEventListener('click', () => {
+                     // Logic to download and launch the client
+                    downloadAndLaunch(selectedVersion, token);
+                });
+
+            } catch (error) {
+                console.error('Error fetching profile:', error);
+                localStorage.removeItem('token');
+                window.location.href = './index.html';
+            }
+            
+            // --- Logout ---
+            if(logoutButton) {
+                logoutButton.addEventListener('click', () => {
+                    localStorage.removeItem('token');
+                    if(window.chrome && window.chrome.webview) {
+                        window.chrome.webview.postMessage('clear_remember_data');
+                    }
+                    window.location.href = './index.html';
+                });
+            }
+        });
+
+        async function downloadAndLaunch(version, token) {
+            const launchButton = document.getElementById('launchBtn');
+            launchButton.disabled = true;
+            launchButton.textContent = 'Downloading...';
+
+            try {
+                const response = await fetch(`/api/clients/${version}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.message || 'Download failed');
+                }
+
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                a.download = `client-${version}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                
+                launchButton.textContent = 'Downloaded!';
+                 setTimeout(() => {
+                    launchButton.disabled = false;
+                    launchButton.textContent = 'Launch';
+                }, 2000);
+
+            } catch (error) {
+                console.error(`Error downloading ${version} client:`, error);
+                launchButton.textContent = 'Error';
+                 setTimeout(() => {
+                    launchButton.disabled = false;
+                    launchButton.textContent = 'Launch';
+                }, 2000);
+            }
+        }
     </script>
 </body>
 </html>

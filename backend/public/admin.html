@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        /* Basic styles from your project */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+        :root {
+            --bg-primary: #0d0d1a;
+            --bg-secondary: rgba(255, 255, 255, 0.05);
+            --border-primary: rgba(255, 255, 255, 0.1);
+            --text-primary: #ffffff;
+            --text-secondary: rgba(255, 255, 255, 0.6);
+            --button-bg: #ffffff;
+            --button-text: #0d0d1a;
+            --success-text: #22c55e;
+            --error-text: #ef4444;
+        }
+        [data-theme="light"] {
+            /* Light theme variables */
+            --bg-primary: #ffffff;
+            --bg-secondary: rgba(0, 0, 0, 0.05);
+            --border-primary: rgba(0, 0, 0, 0.1);
+            --text-primary: #1a1a1a;
+            --text-secondary: rgba(0, 0, 0, 0.6);
+            --button-bg: #1a1a1a;
+            --button-text: #ffffff;
+            --success-text: #16a34a;
+            --error-text: #dc2626;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: var(--bg-secondary);
+            padding: 20px;
+            border-radius: 12px;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid var(--border-primary);
+            text-align: left;
+        }
+        th {
+            background-color: rgba(255,255,255,0.1);
+        }
+        select {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-primary);
+            padding: 5px;
+            border-radius: 5px;
+        }
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            color: var(--text-secondary);
+        }
+        .message {
+            text-align: center;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+        }
+        .success {
+             color: var(--success-text);
+        }
+        .error {
+            color: var(--error-text);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Panel</h1>
+        <div id="message" class="message" style="display: none;"></div>
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Client Key</th>
+                </tr>
+            </thead>
+            <tbody id="users-table-body">
+                <!-- User data will be populated here -->
+            </tbody>
+        </table>
+        <a href="./profile.html" class="back-link">Back to Profile</a>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                window.location.href = './index.html';
+                return;
+            }
+
+            const messageDiv = document.getElementById('message');
+            
+            // First, verify the user is an admin
+            try {
+                const profileResponse = await fetch('/api/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!profileResponse.ok) throw new Error('Not authenticated');
+                const profile = await profileResponse.json();
+                if (profile.role !== 'alpha') {
+                    document.querySelector('.container').innerHTML = '<h1>Access Denied</h1><a href="./profile.html" class="back-link">Back to Profile</a>';
+                    return;
+                }
+            } catch (error) {
+                window.location.href = './index.html';
+                return;
+            }
+
+            // If admin, load users
+            loadUsers(token);
+        });
+
+        async function loadUsers(token) {
+            const tableBody = document.getElementById('users-table-body');
+            try {
+                const response = await fetch('/api/admin/users', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (!response.ok) throw new Error('Failed to load users');
+                
+                const users = await response.json();
+                tableBody.innerHTML = ''; // Clear existing
+                users.forEach(user => {
+                    const row = `
+                        <tr>
+                            <td>${user.id}</td>
+                            <td>${user.username}</td>
+                            <td>
+                                <select data-user-id="${user.id}" onchange="updateRole(this, '${token}')">
+                                    <option value="user" ${user.role === 'user' ? 'selected' : ''}>User</option>
+                                    <option value="beta" ${user.role === 'beta' ? 'selected' : ''}>Beta</option>
+                                    <option value="alpha" ${user.role === 'alpha' ? 'selected' : ''}>Alpha</option>
+                                </select>
+                            </td>
+                            <td>${user.client_key || 'N/A'}</td>
+                        </tr>
+                    `;
+                    tableBody.innerHTML += row;
+                });
+
+            } catch (error) {
+                showMessage(error.message, 'error');
+            }
+        }
+
+        async function updateRole(selectElement, token) {
+            const userId = selectElement.dataset.userId;
+            const role = selectElement.value;
+            
+            try {
+                const response = await fetch('/api/admin/set-role', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ userId, role })
+                });
+
+                const data = await response.json();
+                if (response.ok) {
+                    showMessage('Role updated successfully!', 'success');
+                } else {
+                    throw new Error(data.message || 'Failed to update role');
+                }
+            } catch (error) {
+                showMessage(error.message, 'error');
+            }
+        }
+
+        function showMessage(text, type) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `message ${type}`;
+            messageDiv.style.display = 'block';
+            setTimeout(() => { messageDiv.style.display = 'none'; }, 3000);
+        }
+    </script>
+</body>
+</html> 
